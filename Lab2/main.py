@@ -51,8 +51,8 @@ for i in range(processNum):
 		offsetL = offsetR + 1
 		offsetR += offset
 
-print(offsets)
-exit()
+# print(offsets)
+# exit()
 
 start_time = time.time()
 for i in range(processNum):
