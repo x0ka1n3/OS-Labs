@@ -10,6 +10,13 @@ def sizeof_fmt(num, suffix='B'):
         num /= 1024.0
     return "%.1f%s%s" % (num, 'Yi', suffix)
 
+def rmfile():
+	fName = input("Название файла: ")
+	if os.path.exists(fName):
+		remove = int(input("Точно удалить? (1/0)"))
+		if remove in range(2) and remove == 1:
+			os.remove(fName)
+
 def getDriveInfo():
 	disks = psutil.disk_partitions()
 	for i in range(len(disks)):
@@ -72,11 +79,7 @@ def files():
 		else:
 			print("Файл с таким названием не существует")
 	if choice == 4:
-		fName = input("Название файла: ")
-		if os.path.exists(fName):
-			remove = int(input("Точно удалить? (1/0)"))
-			if remove in range(2) and remove == 1:
-				os.remove(fName)
+		rmfile()
 
 
 
@@ -115,46 +118,99 @@ def jsons():
 			print("Файл с таким названием не существует")
 
 	if choice == 4:
-		fName = input("Название файла: ")
-		if os.path.exists(fName):
-			remove = int(input("Точно удалить? (1/0)"))
-			if remove in range(2) and remove == 1:
-				os.remove(fName)
+		rmfile()
 
 def xmls():
 	choice = askMenu()
 	if choice == 1:
 		createObject()
 	if choice == 2:
+		editor = int(input("""
+					Добавить элементы:
+					1. С помощью встроенного редактора текста
+					2. Ввести новые элементы
+					Выбор: """))
 		fName = input("Название файла: ")
 		root = xml.Element("main")
 
-		flag = 0
-		while True:
-			if flag == 1:
-				break
-			newElText = input("Введите название нового элемента (оставить пустым для завершения цикла): ")
-			newEl = xml.Element(newElText)
-			root.append(newEl)
-			if len(newElText) == 0:
-				break
 
+		if editor == 1:
+			import click
+			click.edit(filename = fName)
+		if editor == 2:
+			flag = 0
 			while True:
-				newSubElText = input("Введите название вложенного элемента (оставить пустым для завершения): ")
-				newSubEl = xml.SubElement(newEl, newSubElText)
-				if len(newSubElText) == 0:
-					flag = 1
+				if flag == 1:
 					break
+				newElText = input("Введите название нового элемента (оставить пустым для завершения цикла): ")
+				if len(newElText) == 0:
+					break
+				newEl = xml.Element(newElText)
+				root.append(newEl)
 
-				newSubEl.text = input("Введите текст для вложенного элемента: ")
+				while True:
+					newSubElText = input("Введите название вложенного элемента (оставить пустым для завершения): ")
+					if len(newSubElText) == 0:
+						flag = 1
+						break
+					newSubEl = xml.SubElement(newEl, newSubElText)
 
-		tree = xml.ElementTree(root)
-		with open(fName, "wb") as file:
-			tree.write(file, encoding = "utf-8")
+					newSubEl.text = input("Введите текст для вложенного элемента: ")
+			tree = xml.ElementTree(root)
+			xml.indent(tree)
+			with open(fName, "wb") as file:
+				tree.write(file, encoding = "utf-8")
+
+	if choice == 3:
+		fName = input("Название файла: ")
+		with open(fName, "r") as xml:
+			print(xml.read())
+	
+	if choice == 4:
+		rmfile()
+
+from zipfile import ZipFile as ZIP
 
 def zips():
 	choice = askMenu()
-	pass
+	if choice == 1:
+		with ZIP(input("Название архива: "), "w") as z:
+			z.close()
+
+	if choice == 2:
+		with ZIP(input("Название архива: "), "a") as z:
+			while True:
+				fName = input("Название добавляемого файла (оставьте пустым для завершения): ")
+				if len(fName) == 0:
+					break
+				z.write(fName)
+			z.close()
+
+	if choice == 3:
+		with ZIP(input("Название архива: "), "r") as z:
+			z.printdir()
+			z.close()
+
+	if choice == 4:
+		rmAsk = int(input("""
+					1. Удалить файл в архиве
+					2. Удалить архив
+					Выбор: """))
+		if rmAsk == 1:
+			fName = input("Название архива: ")
+			fNameDel = input("Название файла для удаления: ")
+			zin = ZIP(fName, 'r')
+			zout = ZIP(f"{fName}_new", 'w')
+			for item in zin.infolist():
+				buff = zin.read(item.filename)
+				if (item.filename != fNameDel):
+					zout.writestr(item, buff)
+			zin.close()
+			zout.close()
+
+			os.rename(f"{fName}_new", f"{fName}")
+		if rmAsk == 2:
+			rmfile()
 
 def main():
 	mainMenu = """
